@@ -4,8 +4,10 @@ import hashlib
 import requests
 from datetime import datetime
 from dotenv import load_dotenv
+import logging
 
 load_dotenv()
+logger = logging.getLogger("AyaSentinel.HederaClient")
 
 class HederaClient:
     """Simplified Hedera client using REST API instead of SDK"""
@@ -25,22 +27,20 @@ class HederaClient:
         
     def initialize_topics(self):
         """Mock initialization for demo"""
-        print(f"Initialized with mock topic: {self.risk_topic_id}")
+        logger.info(f"Initialized with mock topic: {self.risk_topic_id}")
         return self.risk_topic_id
     
     def log_risk_analysis(self, analysis_data: dict) -> dict:
         """Log risk analysis (simulated for demo)"""
         try:
-            # In production, this would submit to HCS
-            # For demo, we'll return a mock response
             message = {
                 "timestamp": datetime.utcnow().isoformat(),
                 "analysis": analysis_data,
                 "version": "1.0.0",
                 "hash": hashlib.sha256(json.dumps(analysis_data).encode()).hexdigest()
             }
-            
             # Simulate HCS submission
+            logger.info(f"Logging risk analysis to HCS (simulated): {json.dumps(message)}")
             return {
                 "success": True,
                 "topic_id": str(self.risk_topic_id),
@@ -49,22 +49,21 @@ class HederaClient:
                 "hash": message["hash"],
                 "message": "Risk analysis logged to Hedera HCS (simulated)"
             }
-            
         except Exception as e:
+            logger.error(f"Error in log_risk_analysis: {e}", exc_info=True)
             return {"success": False, "error": str(e)}
     
     def verify_transaction_onchain(self, tx_data: dict) -> dict:
         """Verify transaction details on Hedera"""
         try:
-            # Query account info from Mirror Node
             if self.account_id:
                 response = requests.get(
                     f"{self.api_base}/accounts/{self.account_id}",
                     timeout=5
                 )
-                
                 if response.status_code == 200:
                     account_data = response.json()
+                    logger.info(f"Verified account {self.account_id} on Hedera: {account_data}")
                     return {
                         "verified": True,
                         "account": str(self.account_id),
@@ -72,8 +71,7 @@ class HederaClient:
                         "timestamp": datetime.utcnow().isoformat(),
                         "network": self.network
                     }
-            
-            # Fallback response
+            logger.warning(f"Fallback verification for account {self.account_id}")
             return {
                 "verified": True,
                 "account": str(self.account_id),
@@ -81,8 +79,8 @@ class HederaClient:
                 "timestamp": datetime.utcnow().isoformat(),
                 "network": self.network
             }
-            
         except Exception as e:
+            logger.error(f"Error in verify_transaction_onchain: {e}", exc_info=True)
             return {
                 "verified": False,
                 "error": str(e),
@@ -105,6 +103,7 @@ class HederaClient:
             }
             
         except Exception as e:
+            logger.error(f"Error in create_safety_token: {e}", exc_info=True)
             return {"success": False, "error": str(e)}
     
     def get_transaction_history(self, account_id: str = None) -> dict:
@@ -123,4 +122,5 @@ class HederaClient:
             return {"transactions": [], "error": "Failed to fetch"}
             
         except Exception:
+            logger.error("Error in get_transaction_history", exc_info=True)
             return {"transactions": [], "error": "API unavailable"}

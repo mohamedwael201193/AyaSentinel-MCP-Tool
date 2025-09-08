@@ -4,8 +4,10 @@ import requests
 import random
 from typing import Dict, Any, List
 from dotenv import load_dotenv
+import logging
 
 load_dotenv()
+logger = logging.getLogger("AyaSentinel.Compute3Client")
 
 class Compute3Client:
     def __init__(self):
@@ -77,13 +79,18 @@ class Compute3Client:
                         "compute_provider": "Comput3.ai (simulated)"
                     }
                 else:
-                    # Fallback to local analysis
+                    logger.warning("No valid API key for Comput3.ai, falling back to local risk analysis.")
                     return self.local_risk_analysis(features)
                     
-            except Exception:
+            except requests.exceptions.RequestException as req_exc:
+                logger.warning(f"Comput3.ai API call failed: {req_exc}. Falling back to local risk analysis.")
+                return self.local_risk_analysis(features)
+            except Exception as e:
+                logger.warning(f"Unexpected error in Comput3.ai API call: {e}. Falling back to local risk analysis.")
                 return self.local_risk_analysis(features)
                 
         except Exception as e:
+            logger.error(f"Error in run_scam_detection_model: {e}", exc_info=True)
             return {
                 "success": False,
                 "risk_score": 0.5,

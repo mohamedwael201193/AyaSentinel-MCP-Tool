@@ -6,8 +6,16 @@ from .scam_detector import ScamDetector
 from dotenv import load_dotenv
 from functools import wraps
 import time
+import json
 
 load_dotenv()
+
+# Configure structured logger
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(name)s %(message)s',
+)
+logger = logging.getLogger("AyaSentinel.MCPServer")
 
 def rate_limit(max_per_minute=30):
     calls = {}
@@ -107,25 +115,31 @@ class MCPServer:
             data = request.get_json(force=True)
             tool = data.get('tool')
             args = data.get('arguments', {})
-            if tool == 'analyze_transaction_risk':
-                result = self.detector.analyze_transaction(args)
-                return jsonify({'result': result})
-            elif tool == 'check_address_reputation':
-                address = args.get('address')
-                result = self.detector.check_address(address)
-                return jsonify({'result': result})
-            elif tool == 'verify_smart_contract':
-                contract_address = args.get('contract_address')
-                result = self.detector.verify_contract(contract_address)
-                return jsonify({'result': result})
-            elif tool == 'get_safe_alternatives':
-                original_action = args.get('original_action')
-                risk_level = args.get('risk_level')
-                result = self.detector.suggest_alternatives(original_action, risk_level)
-                return jsonify({'result': result})
-            else:
-                return jsonify({'error': 'Unknown tool'}), 400
+            logger.info(f"Invoking tool: {tool} | Arguments: {json.dumps(args)}")
+            try:
+                if tool == 'analyze_transaction_risk':
+                    result = self.detector.analyze_transaction(args)
+                    return jsonify({'result': result})
+                elif tool == 'check_address_reputation':
+                    address = args.get('address')
+                    result = self.detector.check_address(address)
+                    return jsonify({'result': result})
+                elif tool == 'verify_smart_contract':
+                    contract_address = args.get('contract_address')
+                    result = self.detector.verify_contract(contract_address)
+                    return jsonify({'result': result})
+                elif tool == 'get_safe_alternatives':
+                    original_action = args.get('original_action')
+                    risk_level = args.get('risk_level')
+                    result = self.detector.suggest_alternatives(original_action, risk_level)
+                    return jsonify({'result': result})
+                else:
+                    logger.error(f"Unknown tool requested: {tool}")
+                    return jsonify({'error': 'Unknown tool'}), 400
+            except Exception as e:
+                logger.error(f"Error in /invoke for tool {tool}: {e}", exc_info=True)
+                return jsonify({'error': f'Internal server error: {str(e)}'}), 500
 
     def run(self, host='0.0.0.0', port=8080):
-        logging.info(f"Starting MCP Server on {host}:{port}")
+        logger.info(f"Starting MCP Server on {host}:{port}")
         self.app.run(host=host, port=port)
