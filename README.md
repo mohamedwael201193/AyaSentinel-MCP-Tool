@@ -111,7 +111,7 @@ cp .env.example .env
 **Run the Server:**
 
 ```bash
-python server/app.py
+python -m server.app
 ```
 
 ## 🔬 Production API Verification
