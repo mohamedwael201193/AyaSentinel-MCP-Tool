@@ -5,7 +5,7 @@ A production-ready MCP server for real-time crypto transaction risk analysis wit
 
 > **Security notice:** Never commit or share private keys or API tokens. Rotate any exposed credentials immediately and update your environment variables accordingly.
 
-- **sentinel-guard-docs:** [https://aya-sentinel-mcp.onrender.com/](https://sentinel-guard-docs-ko33.vercel.app/)
+- **sentinel-guard-docs:** https://sentinel-guard-docs-ko33.vercel.app/
 ---
 
 ## 🔗 Live Endpoints
