@@ -15,12 +15,11 @@ class ScamDetector:
         self.compute3 = Compute3Client()
 
     def analyze_transaction(self, tx: Dict[str, Any]) -> Dict[str, Any]:
-        result = {'risk_level': 'UNKNOWN', 'risk_score': 0.0, 'recommendation': '', 'details': {}}
+        result = {'risk_level': 'UNKNOWN', 'risk_score': 0.0, 'details': {}}
         try:
-            if self.quick_scam_check(tx.get('to_address')):
+            if tx.get('to_address', '').lower() in KNOWN_SCAM_ADDRESSES:
                 result['risk_level'] = 'CRITICAL'
                 result['risk_score'] = 1.0
-                result['recommendation'] = 'BLOCK'
                 result['details']['reason'] = 'Known scam address'
             else:
                 ml_result = self.compute3.run_scam_detection_model(tx)
@@ -28,15 +27,14 @@ class ScamDetector:
                 result['risk_score'] = score
                 if score > 0.8:
                     result['risk_level'] = 'HIGH'
-                    result['recommendation'] = 'BLOCK'
                 elif score > 0.5:
                     result['risk_level'] = 'MEDIUM'
-                    result['recommendation'] = 'WARN'
                 else:
                     result['risk_level'] = 'LOW'
-                    result['recommendation'] = 'ALLOW'
                 result['details'].update(ml_result)
+            
             self.hedera.log_risk_analysis({**tx, **result})
+            
         except Exception as e:
             logging.error(f"analyze_transaction error: {e}")
             result['risk_level'] = 'ERROR'
@@ -49,17 +47,14 @@ class ScamDetector:
     def check_address(self, address: str) -> Dict[str, Any]:
         if self.quick_scam_check(address):
             return {'reputation': 'scam', 'risk': 1.0}
-        # Simulate multi-chain check
         return {'reputation': 'unknown', 'risk': 0.5}
 
     def verify_contract(self, contract_address: str) -> Dict[str, Any]:
-        # Simulate contract verification
         if contract_address.lower() in KNOWN_SCAM_ADDRESSES:
             return {'verified': False, 'risk': 1.0, 'reason': 'Known scam contract'}
         return {'verified': True, 'risk': 0.1}
 
     def suggest_alternatives(self, original_action: str, risk_level: str) -> Dict[str, Any]:
-        # Suggest safe protocols
         if risk_level.upper() in ['HIGH', 'CRITICAL']:
             return {'alternatives': SAFE_PROTOCOLS, 'message': 'Use trusted protocols only.'}
         return {'alternatives': [], 'message': 'No alternatives needed.'}

@@ -3,7 +3,7 @@ import json
 import time
 
 # URL of your deployed Render application
-BASE_URL = "https://aya-sentinel-mcp.onrender.com"
+BASE_URL = "https://aya-sentinel-mcp.onrender.com/"
 
 def warm_up_server():
     """Sends a request to wake up the server if it's sleeping."""
