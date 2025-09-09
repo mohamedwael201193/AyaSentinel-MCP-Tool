@@ -1,38 +1,54 @@
-
 🛡️ AyaSentinel MCP Tool
 
-🏆 Built for Aya Labs MCP Hackathon 2025
-Real-Time Crypto Scam Detection Engine with Zero Bugs, Production-Ready
-Live API | Test Now | Integration Guide
 
-🎯 Hackathon Judging Criteria: ✅ ALL MET
-CriteriaStatusEvidenceUses Comput3.ai for Compute✅ IMPLEMENTEDML-powered risk analysis via Comput3 API (view code)Integrates with Aya App✅ MCP READYFull MCP protocol implementation with 6 tools (test endpoint)Runs Without Bugs✅ 100% STABLEZero errors in production - Run testIntegrates Hedera✅ ON-CHAINEvery transaction logged to Hedera Consensus Service (view integration)
 
-🚀 What is AyaSentinel?
-AyaSentinel is a production-ready MCP tool that protects crypto users from scams in real-time. When integrated into the Aya app, it analyzes every transaction BEFORE execution, providing instant risk scores powered by Comput3.ai's ML infrastructure and creating an immutable audit trail on Hedera's blockchain.
-💡 The Problem We Solve
 
-* $4.6 Billion lost to crypto scams in 2023
-* 92% of users can't identify sophisticated scams
-* 0% chance of recovery once funds are sent
 
-⚡ Our Solution
+A production-ready MCP server for real-time crypto transaction risk analysis with optional on-chain logging via Hedera.
+
+Security notice: Never commit or share private keys or API tokens. Rotate any exposed credentials immediately and update your environment variables accordingly.
+
+
+🔗 Live Endpoints
+
+* Health: https://aya-sentinel-mcp.onrender.com/
+* Tools: https://aya-sentinel-mcp.onrender.com/tools
+* Invoke: POST https://aya-sentinel-mcp.onrender.com/invoke
+* Hedera log: POST https://aya-sentinel-mcp.onrender.com/api/scan/transaction
+
+
+✨ Overview
+AyaSentinel analyzes transaction metadata, address reputation, and smart contract signals to return a clear risk score and contextual details—before funds are moved. It exposes capabilities via the Model Context Protocol (MCP) for seamless integration in agentic apps such as Aya.
+Key capabilities:
+
+* Real-time risk scoring for common Web3 operations
+* ML-assisted threat signals via Comput3.ai
+* Hedera-based immutable audit logs (optional)
+* Clean MCP interface with 6 tools
+
+
+🧩 Architecture
 mermaidDownloadCopy code Wrapgraph LR
-    A[User Transaction] --> B[AyaSentinel MCP]
-    B --> C[Comput3.ai ML Analysis]
-    B --> D[Hedera Audit Log]
-    C --> E[Risk Score]
-    D --> F[Immutable Record]
-    E --> G[Aya App Warning]
+    A[Aya App / Client] -->|MCP| B[AyaSentinel MCP Server]
+    B --> C[Comput3.ai ML]
+    B --> D[Hedera HCS (optional)]
+    C --> E[Risk Score + Details]
+    D --> F[Immutable Log]
 
-📊 Live Production Metrics
-MetricValueProofUptime100%Check StatusResponse Time<500msTest it yourself belowTools Available6 MCP ToolsView AllChains SupportedEthereum, Hedera, EVMMulti-chain readyML Accuracy94.7%Comput3-powered
+🛠️ MCP Tools
+Tool namePurposeMinimal inputOutput (summary)analyze_transaction_riskEnd-to-end risk analysis of a transactionchain, to_address, value (+ optional metadata)risk_level, risk_score, detailscheck_address_reputationQuick address reputation checkaddressreputation, riskverify_contractLightweight contract safety checkcontract_addressverified, risk, reasonget_chain_infoBasic chain/network infochainname, network, metadatasuggest_alternativesSafer protocol suggestionsoriginal_action, risk_levelalternatives[], messagehedera_compute_jobOffload/trigger ML compute via Comput3docker_image, commandjob metadata, status
+Discover tools and schemas:
+bashDownloadCopy code Wrapcurl https://aya-sentinel-mcp.onrender.com/tools
 
-🔬 Instant Test
-Test #1: Check if it's running (No Bugs!)
+🔬 Instant Tests
+
+* Health
+
 bashDownloadCopy code Wrapcurl https://aya-sentinel-mcp.onrender.com/
-Expected: {"status": "AyaSentinel MCP Tool is running"}
-Test #2: Detect a Known Scam
+# → {"status":"AyaSentinel MCP Tool is running"}
+
+* Known scam detection
+
 bashDownloadCopy code Wrapcurl -X POST https://aya-sentinel-mcp.onrender.com/invoke \
   -H "Content-Type: application/json" \
   -d '{
@@ -43,195 +59,201 @@ bashDownloadCopy code Wrapcurl -X POST https://aya-sentinel-mcp.onrender.com/inv
       "value": 1000
     }
   }'
-Expected: "risk_level": "CRITICAL" ⚠️
-Test #3: Verify MCP Tools
-bashDownloadCopy code Wrapcurl https://aya-sentinel-mcp.onrender.com/tools
-Expected: 6 tools including hedera_compute_job (Comput3) and analyze_transaction_risk
+# → risk_level: "CRITICAL"
+
+* Hedera submission endpoint (logs the analysis hash)
+
+bashDownloadCopy code Wrapcurl -X POST https://aya-sentinel-mcp.onrender.com/api/scan/transaction \
+  -H "Content-Type: application/json" \
+  -d '{"data": "some transaction data"}'
+Full production test script:
+bashDownloadCopy code Wrappython test_production.py
+Optional comprehensive checks:
+bashDownloadCopy code Wrappython test_complete.py
 
 🤖 Aya App Integration
-AyaSentinel follows the Model Context Protocol (MCP) standard, making integration seamless:
-For Aya Developers:
-javascriptDownloadCopy code Wrap// aya-app-integration.js
+AyaSentinel implements the MCP interface while keeping the HTTP surface minimal. Example client-side use:
+javascriptDownloadCopy code Wrap// aya-app-integration.js (example)
 const AyaSentinel = {
   endpoint: 'https://aya-sentinel-mcp.onrender.com',
-  
-  async checkTransaction(txData) {
-    const response = await fetch(`${this.endpoint}/invoke`, {
+
+  async analyze(txData) {
+    const res = await fetch(`${this.endpoint}/invoke`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
         tool: 'analyze_transaction_risk',
         arguments: txData
       })
     });
-    
-    const result = await response.json();
-    
-    if (result.result.risk_level === 'CRITICAL') {
-      // Show warning in Aya app
-      return { block: true, reason: result.result.details };
-    }
-    
-    return { block: false };
+    const data = await res.json();
+    return data.result;
   }
 };
-Available MCP Tools:
 
-1. analyze_transaction_risk - Real-time scam detection
-2. check_address_reputation - Address blacklist checking
-3. verify_contract - Smart contract verification
-4. get_chain_info - Multi-chain data retrieval
-5. suggest_alternatives - Safe protocol recommendations
-6. hedera_compute_job - GPU-accelerated ML analysis via Comput3
+// Usage:
+(async () => {
+  const result = await AyaSentinel.analyze({
+    chain: 'ethereum',
+    to_address: '0x000000000000000000000000000000000000dead',
+    value: 1000
+  });
+  console.log(result);
+})();
 
+⚙️ Local Development
 
-🔗 Technology Stack
-Core Technologies
-ComponentTechnologyPurposeML ComputeComput3.aiGPU-accelerated threat detectionBlockchainHedera Consensus ServiceImmutable audit loggingMCP ProtocolStandard ImplementationAya app compatibilityBackendPython/FlaskHigh-performance APIDeploymentRender (Auto-scaling)100% uptime
-Integrations Deep Dive
-🧠 Comput3.ai Integration
+1. Install
 
-* Purpose: Advanced ML-powered pattern recognition
-* Implementation: comput3_client.py
-* Features:
+bashDownloadCopy code Wrappip install -r requirements.txt
 
-Real-time transaction analysis
-Behavioral pattern detection
-GPU-accelerated processing
+1. Configure environment
 
+bashDownloadCopy code Wrapcp .env.example .env
+# edit .env with your values (never commit secrets)
+
+1. Run
+
+bashDownloadCopy code Wrappython -m server.app
+# or
+gunicorn -b 0.0.0.0:8080 server.app:app
+
+🧾 Environment Variables
+Place these in your .env (not committed) or in your deployment environment.
+iniDownloadCopy code Wrap# Core
+FLASK_PORT=8080
+ENVIRONMENT=production
+
+# Comput3.ai
+COMPUT3_API_KEY=your_comput3_api_key
+COMPUT3_BASE_URL=https://api.comput3.ai/v1
+
+# Hedera (for on-chain logging)
+HEDERA_NETWORK=testnet
+HEDERA_ACCOUNT_ID=0.0.xxxxxxx
+HEDERA_PRIVATE_KEY=302e020100300506032b657004220420...   # never share
+HEDERA_TOPIC_ID=0.0.yyyyyy
+
+# Optional: HCS Relay URL if using a relay service
+HCS_RELAY_URL=https://your-relay.example.com
+HCS_RELAY_TOKEN=long_random_token
+Notes:
+
+* If HCS_RELAY_URL is set, AyaSentinel posts messages to that relay; otherwise it uses a safe local mock that writes structured logs.
+* To view on-chain messages, you must use a valid Topic ID on the correct network and submit via a real SDK/relay.
 
 
 ⛓️ Hedera Integration
+AyaSentinel supports Hedera Consensus Service (HCS) logging in two modes:
 
-* Purpose: Immutable transaction logging
-* Implementation: hedera_mock.py
-* Network: Testnet
-* Features:
-
-Every risk assessment logged on-chain
-Verifiable audit trail
-No Java dependencies (REST API approach)
+1. Development (default)
 
 
+* Uses a local mock client (no Java/JNI).
+* Writes Hedera-compatible log entries to a file and returns structured responses.
 
 
-🏗️ Architecture
-┌─────────────────────────────────────────┐
-│            Aya App (Client)             │
-└────────────────┬────────────────────────┘
-                 │ MCP Protocol
-                 ▼
-┌─────────────────────────────────────────┐
-│         AyaSentinel MCP Server          │
-│  https://aya-sentinel-mcp.onrender.com  │
-├─────────────────────────────────────────┤
-│  • Flask API Server                     │
-│  • MCP Tool Registry                    │
-│  • Risk Analysis Engine                 │
-└──────┬──────────────────────┬───────────┘
-       │                      │
-       ▼                      ▼
-┌──────────────┐      ┌───────────────────┐
-│ Comput3.ai   │      │  Hedera Network   │
-│ GPU Cluster  │      │  Consensus Service │
-└──────────────┘      └───────────────────┘
+1. Production (on-chain)
 
 
-📈 Performance & Reliability
-Production Stats (Live)
+* Submit messages to an HCS relay (or your own service) that uses the official Hedera SDK to post to your Topic ID.
+* Configure:
 
-* Zero Downtime since deployment
-* Zero Bugs in production
-* <500ms average response time
-* 100% Test Coverage - All endpoints verified
-
-Run Complete Test Suite:
-pythonDownloadCopy code Wrap# Save as test_production.py and run
-import requests
-
-BASE_URL = "https://aya-sentinel-mcp.onrender.com"
-
-# Test all endpoints
-tests = [
-    ("Health", "GET", "/", None),
-    ("Tools", "GET", "/tools", None),
-    ("Scam Detection", "POST", "/invoke", {
-        "tool": "analyze_transaction_risk",
-        "arguments": {
-            "chain": "ethereum",
-            "to_address": "0x000000000000000000000000000000000000dead",
-            "value": 1000
-        }
-    })
-]
-
-for name, method, path, data in tests:
-    url = BASE_URL + path
-    r = requests.request(method, url, json=data)
-    print(f"✅ {name}: {r.status_code}")
-
-print("🎉 ALL TESTS PASSED - ZERO BUGS!")
-
-🚀 Quick Start (For Judges)
-1. Test the Live API (30 seconds)
-bashDownloadCopy code Wrap# No installation needed - it's already deployed!
-curl https://aya-sentinel-mcp.onrender.com/tools
-2. For Local Testing (Optional)
-bashDownloadCopy code Wrapgit clone https://github.com/mohamedwael201193/AyaSentinel-MCP-Tool
-cd AyaSentinel-MCP-Tool
-pip install -r requirements.txt
-python -m server.app
+HCS_RELAY_URL and HCS_RELAY_TOKEN
+HEDERA_TOPIC_ID (testnet or mainnet)
 
 
-✅ Meets ALL Judging Criteria
+* Verify messages on Hashscan:
 
-1. 
-Comput3.ai Integration ✓
-
-Full GPU-accelerated ML implementation
-Real transaction analysis via Comput3 API
-
-
-2. 
-Aya App Compatible ✓
-
-Complete MCP protocol implementation
-6 production-ready tools
-Drop-in integration ready
-
-
-3. 
-Zero Bugs ✓
-
-100% uptime in production
-All endpoints tested and verified
-No errors, no crashes
-
-
-4. 
-Hedera Integration ✓
-
-Every transaction logged on-chain
-Immutable audit trail
-Testnet integrated
+Testnet: https://hashscan.io/testnet/topic/<YOUR_TOPIC_ID>
+Mainnet: https://hashscan.io/mainnet/topic/<YOUR_TOPIC_ID>
 
 
 
-* Already Deployed - Not just code, but a running service
-* Real-Time Protection - Sub-second response times
-* Multi-Chain Support - Works across ecosystems
-* Production-Ready - Can be integrated into Aya today
+Creating a Topic:
+
+* Use Hedera Portal (recommended) to generate keys and create a topic on testnet or mainnet.
+* Store keys securely; rotate if exposed.
 
 
-📞 Contact & Links
+🧠 Comput3.ai Integration
 
+* Purpose: ML-assisted risk scoring and anomaly signals
+* Configuration: COMPUT3_API_KEY and COMPUT3_BASE_URL
+* Code path: server/comput3_client.py (invoked inside analyze flows)
+
+Example request (via MCP invoke):
+jsonDownloadCopy code Wrap{
+  "tool": "hedera_compute_job",
+  "arguments": {
+    "docker_image": "python:3.11",
+    "command": "python -c \"print('hello')\""
+  }
+}
+
+🧪 API Reference
+
+* 
+GET /
+
+Returns service status.
+
+
+* 
+GET /tools
+
+Lists all MCP tools with their schemas.
+
+
+* 
+POST /invoke
+
+Executes a tool by name with arguments.
+Body:
+jsonDownloadCopy code Wrap{
+  "tool": "analyze_transaction_risk",
+  "arguments": { "chain":"ethereum", "to_address":"...", "value": 10 }
+}
+
+
+
+* 
+POST /api/scan/transaction
+
+Accepts arbitrary JSON, derives a content hash, and logs it through the Hedera client (mock or relay).
+
+
+
+
+📦 Deployment (Render example)
+
+* Build: pip install -r requirements.txt
+* Start: gunicorn -b 0.0.0.0:8080 server.app:app
+* Set environment variables in the Render dashboard.
+* Optional: deploy an HCS Relay (Node/JS) and set HCS_RELAY_URL/TOKEN.
+
+
+📁 Repository
+
+* Source: https://github.com/mohamedwael201193/AyaSentinel-MCP-Tool
 * Live API: https://aya-sentinel-mcp.onrender.com
-* GitHub: https://github.com/mohamedwael201193/AyaSentinel-MCP-Tool
-* Test Endpoint: https://aya-sentinel-mcp.onrender.com/tools
 
 
 📄 License
-MIT License - Open source and ready for integration
+MIT — see LICENSE.
 
-🏆 Built with ❤️ for Aya Labs MCP Hackathon 2025
-TEST IT NOW | 100% WORKING | ZERO BUGS
+If you need a minimal .env.example for the repo, use:
+iniDownloadCopy code Wrap# .env.example
+FLASK_PORT=8080
+ENVIRONMENT=production
+
+COMPUT3_API_KEY=
+COMPUT3_BASE_URL=https://api.comput3.ai/v1
+
+HEDERA_NETWORK=testnet
+HEDERA_ACCOUNT_ID=
+HEDERA_PRIVATE_KEY=
+HEDERA_TOPIC_ID=
+
+HCS_RELAY_URL=
+HCS_RELAY_TOKEN=
