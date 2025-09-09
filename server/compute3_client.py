@@ -1,4 +1,4 @@
-# server/comput3_client.py
+# server/compute3_client.py
 
 import os
 import requests
@@ -70,3 +70,13 @@ class Comput3Client:
                 "message": "An unexpected internal error occurred.",
                 "details": str(e)
             }
+
+    def run_compute_job(self, image: str, cmd: str):
+        payload = {"image": image, "cmd": cmd}
+        resp = requests.post(
+            f"{self.base_url}/jobs",
+            headers=self.headers,
+            json=payload, timeout=30
+        )
+        resp.raise_for_status()
+        return resp.json()["jobId"]

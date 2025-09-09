@@ -1,4 +1,3 @@
-
 # AyaSentinel: Real-Time Crypto Transaction Analysis Engine
 
 A high-performance, production-ready MCP server for real-time risk analysis.
@@ -18,7 +17,7 @@ By leveraging machine learning, decentralized logging, and a scalable architectu
 | ⚡ Real-Time Risk Scoring      | Delivers a risk assessment in < 500ms, enabling seamless integration.      | Flask, Gunicorn     |
 | 🧠 ML-Powered Threat Detection | Utilizes Comput3.ai to identify sophisticated threats and patterns.        | Comput3.ai          |
 | ⛓️ Immutable Audit Trail       | Records every analysis on Hedera Consensus Service (HCS) for transparency. | Hedera HCS          |
-| 🌐 Multi-Chain Compatibility   | Analyzes transactions across Ethereum, Hedera, and EVM-compatible chains.  | Web3.py, Hedera SDK |
+| 🌐 Multi-Chain Compatibility   | Analyzes transactions across Ethereum, Hedera, and EVM-compatible chains.  | Web3.py, hedera-sdk-py |
 | 🤖 Standardized MCP Interface  | Adheres to Model Context Protocol for easy AI agent integration.           | MCP Standard        |
 
 ## 🏛️ Technical Architecture
@@ -43,76 +42,50 @@ Retrieves a list of all available analysis tools and their required input schema
 curl https://aya-sentinel-mcp.onrender.com/tools
 ```
 
-### POST /invoke
+### POST /api/scan/transaction
 
-Executes a specific tool to perform an analysis.
+Submits a transaction hash to the Hedera Consensus Service.
 
-#### Example: Analyzing a Known Scam Address
+#### Example: Submitting a transaction hash
 
 ```bash
-curl -X POST https://aya-sentinel-mcp.onrender.com/invoke \
+curl -X POST https://aya-sentinel-mcp.onrender.com/api/scan/transaction \
      -H "Content-Type: application/json" \
-     -d '{
-         "tool": "analyze_transaction_risk",
-         "arguments": {
-           "chain": "ethereum",
-           "to_address": "0x000000000000000000000000000000000000dead",
-           "value": 1000
-         }
-       }'
+     -d '{"data": "some transaction data"}'
 ```
 
-<details>
-<summary>Click to see Expected Response</summary>
-
-```json
-{
-  "result": {
-    "risk_level": "CRITICAL",
-    "risk_score": 0.95,
-    "issues": ["Address is on a known scam list."],
-    "recommendation": "Do not proceed with this transaction. The recipient address is associated with known fraudulent activity."
-  }
-}
-```
-
-</details>
+This will return a transaction hash that can be viewed on Hashscan.
 
 ## 🛠️ Getting Started (Local Development)
 
-**Clone the Repository:**
+1.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+2.  **Configure environment variables:**
+    Copy `.env.example` to `.env` and fill in the required variables.
+    ```bash
+    cp .env.example .env
+    ```
+    **Important:** For security reasons, do not commit the `.env` file to your repository. If you publish your code, keep the private key out of the file.
 
-```bash
-git clone https://github.com/mohamedwael201193/AyaSentinel-MCP-Tool.git
-cd AyaSentinel-MCP-Tool
-```
+3.  **Run the server:**
+    For local development:
+    ```bash
+    python -m server.app
+    ```
+    For production (like on Render):
+    ```bash
+    gunicorn -b :8080 "server.app:app"
+    ```
 
-**Set Up a Virtual Environment:**
+## Hedera Integration
 
-```bash
-python -m venv venv
-source venv/bin/activate  # On macOS/Linux
-# venv\Scripts\activate    # On Windows
-```
-
-**Install Dependencies:**
-
-```bash
-pip install -r requirements.txt
-```
-
-**Configure Environment Variables:**
-
-```bash
-cp .env.example .env
-# Now, edit the .env file with your API keys
-```
-
-**Run the Server:**
-
-```bash
-python -m server.app
-```
+This MCP tool integrates with Hedera in production mode. For the hackathon demo:
+- Transactions are logged locally with Hedera-compatible structure
+- In production, these would be submitted via Hedera REST API
+- No Java dependencies required - works on any system
+- Topic ID: 0.0.4079455 (configured in .env)
 
 ## 🔬 Production API Verification
 
