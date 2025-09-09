@@ -36,9 +36,10 @@ It exposes capabilities via the **Model Context Protocol (MCP)** for seamless in
 graph LR
     A[Aya App / Client] -->|MCP| B[AyaSentinel MCP Server]
     B --> C[Comput3.ai ML]
-    B --> D[Hedera HCS (optional)]
+    B --> D["Hedera HCS (optional)"]
     C --> E[Risk Score + Details]
     D --> F[Immutable Log]
+
 ````
 
 ---
