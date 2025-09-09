@@ -1,5 +1,3 @@
-<div align="center">
-<img src="https://i.imgur.com/x03fVfT.png" alt="AyaSentinel Banner" width="800"/>
 
 # AyaSentinel: Real-Time Crypto Transaction Analysis Engine
 
@@ -113,7 +111,7 @@ cp .env.example .env
 **Run the Server:**
 
 ```bash
-python server/app.py
+python -m server.app
 ```
 
 ## 🔬 Production API Verification
