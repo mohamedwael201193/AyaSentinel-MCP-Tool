@@ -1,3 +1,4 @@
+
 🛡️ AyaSentinel MCP Tool
 
 🏆 Built for Aya Labs MCP Hackathon 2025
@@ -215,8 +216,6 @@ Immutable audit trail
 Testnet integrated
 
 
-
-🌟
 
 * Already Deployed - Not just code, but a running service
 * Real-Time Protection - Sub-second response times
